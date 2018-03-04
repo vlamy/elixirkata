@@ -30,16 +30,19 @@ defmodule Elixirkata.DataMunging do
 
   defp computeSpread({dy, mxt, mnt}), do: {dy, mxt - mnt}
 
-  defp extractDy({dy, _}), do: dy
+  defp formatAndConvert(filepath, format, convert) do
+    filepath
+    |> decodeDat
+    |> Enum.map(format)
+    |> Enum.reject(fn x -> x == :rejected end)
+    |> Enum.map(convert)
+  end
 
   def parseWeather(filepath) do
     filepath
-    |> decodeDat
-    |> Enum.map(&formatEntries/1)
-    |> Enum.reject(fn x -> x == :rejected end)
-    |> Enum.map(&computeSpread/1)
+    |> formatAndConvert(&formatEntries/1, &computeSpread/1)
     |> Enum.max_by(fn {_, mxt} -> mxt end)
-    |> extractDy
+    |> elem(0)
   end
 
   defp formatFootEntries(entry) do
@@ -55,15 +58,10 @@ defmodule Elixirkata.DataMunging do
       _ -> :rejected
   end
 
-  defp extractTeam({team, _}), do: team
-
   def parseFootball(filepath) do
     filepath
-    |> decodeDat
-    |> Enum.map(&formatFootEntries/1)
-    |> Enum.reject(fn x -> x == :rejected end)
-    |> Enum.map(&convertFootEntrie/1)
+    |> formatAndConvert(&formatFootEntries/1, &convertFootEntrie/1)
     |> Enum.min_by(fn {_, diff} -> diff end)
-    |> extractTeam
+    |> elem(0)
   end
 end
