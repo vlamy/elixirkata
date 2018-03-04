@@ -41,4 +41,29 @@ defmodule Elixirkata.DataMunging do
     |> Enum.max_by(fn {_, mxt} -> mxt end)
     |> extractDy
   end
+
+  defp formatFootEntries(entry) do
+    case entry do
+      [_, team, _, _, _, _ , for_v, _ , against, _] -> {team, for_v, against}
+      _ -> :rejected
+    end
+  end
+
+  defp convertFootEntrie({team, for_v, against}) do
+    {team, abs(convertEntry(for_v) - convertEntry(against))}
+    rescue
+      _ -> :rejected
+  end
+
+  defp extractTeam({team, _}), do: team
+
+  def parseFootball(filepath) do
+    filepath
+    |> decodeDat
+    |> Enum.map(&formatFootEntries/1)
+    |> Enum.reject(fn x -> x == :rejected end)
+    |> Enum.map(&convertFootEntrie/1)
+    |> Enum.min_by(fn {_, diff} -> diff end)
+    |> extractTeam
+  end
 end
